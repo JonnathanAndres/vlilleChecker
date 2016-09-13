@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.util.Log;
 
 import com.vlille.checker.R;
 
@@ -17,12 +18,12 @@ import com.vlille.checker.R;
  * Wrapper for LocationManager.
  */
 public class LocationManagerWrapper {
-	
+
 	public static int DURATION_UPDATE_IN_MILLIS = 10000;
 	public static int DISTANCE_UPDATE_IN_METERS = 10000;
-	
+
 	private static final String TAG = LocationManagerWrapper.class.getSimpleName();
-	
+
 	private Context context;
 	private LocationManager locationManager;
 
@@ -30,22 +31,28 @@ public class LocationManagerWrapper {
 		this.context = context;
 		this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 	}
-	
+
 	public static LocationManagerWrapper with(Context context) {
 		return new LocationManagerWrapper(context);
 	}
-	
+
 	public boolean hasCurrentLocation() {
 		return getCurrentLocation() != null;
 	}
-	
-	public Location getCurrentLocation() {
-		return getLastBestLocation(DISTANCE_UPDATE_IN_METERS, DURATION_UPDATE_IN_MILLIS);
-	}
+
+    public Location getCurrentLocation() {
+        try {
+            return getLastBestLocation(DISTANCE_UPDATE_IN_METERS, DURATION_UPDATE_IN_MILLIS);
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception handler", e);
+
+            return null;
+        }
+    }
 
 	/**
 	   * Returns the most accurate and timely previously detected location.
-	   * Where the last result is beyond the specified maximum distance or 
+	   * Where the last result is beyond the specified maximum distance or
 	   * latency a one-off location update is returned via the {@link LocationListener}
 	   * specified in {@link setChangedLocationListener}.
 	   * @param minDistance Minimum distance before we require a location update.
@@ -86,22 +93,22 @@ public class LocationManagerWrapper {
 			createGpsDisabledAlert();
 		}
 	}
-	
+
 	public LocationProvider getBestAvailableProvider() {
 		if (isGpsProviderEnabled()) {
 			return getGpsProvider();
 		}
-		
+
 		return locationManager.getProvider(LocationManager.NETWORK_PROVIDER);
 	}
-	
+
 	public String getBestAvailableProviderName() {
 		final LocationProvider bestAvailableProvider = getBestAvailableProvider();
-		
+
 		if (bestAvailableProvider != null) {
 			return bestAvailableProvider.getName();
 		}
-		
+
 		return "";
 	}
 
